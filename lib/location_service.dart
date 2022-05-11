@@ -1,41 +1,30 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:http/http.dart' as http;
 
 class LocationService{
-  final String apiKey = 'AIzaSyCS5dkzV7PAltcWH5C_J7QsOaB5BXTU5D4';
+  final String apiKey = 'AIzaSyA0y82hvYQpAYdusasMnFiQOgy-D5rPYWA';
 
-  Future<String> getPlaceId(String input)async{
-    final String url = 'https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=$input&inputtype=textquery&key=$apiKey';
+  Future<Map<String,dynamic>> getDirections(String origin, String destination)async{
+    final String url = 'https://maps.googleapis.com/maps/api/directions/json?origin=$origin&destination=$destination&key=$apiKey';
     try{
       var response = await http.get(Uri.parse(url));
       var jsonData = jsonDecode(response.body);
-      //var placeId = jsonData['candidates'][0]['place_id'] as String;
-      print(jsonData);
-      return '';
-    }catch(e){
-      if (kDebugMode) {
-        print(e.toString());
-      }
-      return e.toString();
-    }
-  }
-
-  Future<Map<String,dynamic>> getPlace(String input)async{
-    String placeId = await getPlaceId(input);
-
-    final String url = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey';
-    try{
-      var response = await http.get(Uri.parse(url));
-      var jsonData = jsonDecode(response.body);
-      var result = jsonData['result'] as Map<String,dynamic>;
-      print(result);
+      var result = {
+        'bounds_ne': jsonData['routes'][0]['bounds']['northeast'],
+        'bounds_sw': jsonData['routes'][0]['bounds']['southwest'],
+        'start_location': jsonData['routes'][0]['legs'][0]['start_location'],
+        'end_location': jsonData['routes'][0]['legs'][0]['end_location'],
+        'polyline': jsonData['routes'][0]['overview_polyline']['points'],
+        'polyline_decoded': PolylinePoints().decodePolyline(jsonData['routes'][0]['overview_polyline']['points'])
+      };
       return result;
     }catch(e){
       if (kDebugMode) {
         print(e.toString());
-      }
-      return {};
+      }return {};
     }
   }
+
 }
